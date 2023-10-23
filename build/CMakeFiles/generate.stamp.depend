@@ -1,0 +1,25 @@
+# CMake generation dependency list for this directory.
+E:/Program Files/CMake/share/cmake-3.28/Modules/CMakeCInformation.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/CMakeCXXInformation.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/CMakeCommonLanguageInclude.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/CMakeGenericSystem.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/CMakeInitializeConfigs.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/CMakeLanguageInformation.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/CMakeRCInformation.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/CMakeSystemSpecificInformation.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/CMakeSystemSpecificInitialize.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/Compiler/CMakeCommonCompilerMacros.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/Compiler/MSVC-C.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/Compiler/MSVC-CXX.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/Compiler/MSVC.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/Platform/Windows-Initialize.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/Platform/Windows-MSVC-C.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/Platform/Windows-MSVC-CXX.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/Platform/Windows-MSVC.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/Platform/Windows.cmake
+E:/Program Files/CMake/share/cmake-3.28/Modules/Platform/WindowsPaths.cmake
+F:/QuicRTC/QuicRTCEngine/CMakeLists.txt
+F:/QuicRTC/QuicRTCEngine/build/CMakeFiles/3.28.0-rc1/CMakeCCompiler.cmake
+F:/QuicRTC/QuicRTCEngine/build/CMakeFiles/3.28.0-rc1/CMakeCXXCompiler.cmake
+F:/QuicRTC/QuicRTCEngine/build/CMakeFiles/3.28.0-rc1/CMakeRCCompiler.cmake
+F:/QuicRTC/QuicRTCEngine/build/CMakeFiles/3.28.0-rc1/CMakeSystem.cmake
