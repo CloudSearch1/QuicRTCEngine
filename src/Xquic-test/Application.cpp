@@ -51,7 +51,7 @@ uint64_t g_last_sock_op_time;
 struct event_base* eb;
 int g_send_body_size;
 int g_send_body_size_defined;
-char g_read_file[256];
+char g_read_file[256] = "./test2.mp4";
 int g_save_body;
 char g_write_file[256];
 int g_echo_check;
@@ -61,6 +61,7 @@ char g_host[64] = "test.xquic.com";
 int g_conn_timeout = 1;
 int g_ipv6;
 static uint64_t last_recv_ts = 0;
+unsigned char tmp_user_stream[2048];
 
 typedef struct xqc_user_path_s {
     int                 path_fd;
@@ -174,7 +175,7 @@ void xqc_client_write_log(xqc_log_level_t lvl, const void* buf, size_t count, vo
 
     client_ctx_t* ctx = (client_ctx_t*)engine_user_data;
     if (ctx->log_fd <= 0) {
-        printf("xqc_client_write_log fd err\n");
+        //printf("xqc_client_write_log fd err\n");
         return;
     }
 
@@ -443,7 +444,7 @@ int read_file_data(char* data, size_t data_len, char* filename)
         goto end;
     }
 
-    read_len = fread(data, 1, total_len, fp);
+    read_len = fread(data, total_len, total_len, fp);
     if (read_len != total_len) {
         ret = -1;
         goto end;
@@ -500,7 +501,7 @@ int xqc_client_stream_send(xqc_stream_t* stream, void* user_data)
         }
     }
 
-    int fin = 1;
+    int fin = 0;
     if (g_test_case == 4) { /* test fin_only */
         fin = 0;
     }
@@ -823,7 +824,7 @@ err:
 void xqc_client_socket_write_handler(user_conn_t* user_conn)
 {
     DEBUG
-        xqc_conn_continue_send(ctx.engine, &user_conn->cid);
+    xqc_conn_continue_send(ctx.engine, &user_conn->cid);
 }
 
 void xqc_client_socket_read_handler(user_conn_t* user_conn, int fd)
@@ -1039,6 +1040,50 @@ void xqc_platform_init_env()
 
 }
 
+
+
+FILE* file_ptr;
+int sum_file_size;
+void OpenFile(char file[], FILE*& p)
+{
+    while (true)
+    {
+        if (!(p = fopen(file, "rb")))
+        {
+            memset(file, 0, sizeof(file));
+            std::cout << "file path error" << std::endl;
+        }
+        else
+        {
+            break;
+        }
+    }
+}
+
+char* GetPilePath(char path[])
+{
+    static char name[20];
+    memset(name, 0, sizeof(name));
+    int len = strlen(path);
+    int count = 0;
+    for (int i = len - 1; i > 0; i--) {
+        if (path[i] != '\\' && path[i] != '/') {
+            count++;
+        }
+        else {
+            break;
+        }
+    }
+    int j = 0;
+    int pos = len - count;
+    for (int i = pos; i < len; i++) {
+        name[j++] = path[i];
+    }
+    std::cout << "name£º" << name << std::endl;
+    return name;
+}
+
+
 int main(int argc, char* argv[])
 {
     int g_req_cnt = 0;
@@ -1064,7 +1109,6 @@ int main(int argc, char* argv[])
     int pacing_on = 0;
     int transport = 1; // not use http 3
     int use_1rtt = 0;
-   
     memset(g_header_key, 'k', sizeof(g_header_key));
     memset(g_header_value, 'v', sizeof(g_header_value));
     memset(&ctx, 0, sizeof(ctx));
@@ -1214,6 +1258,8 @@ int main(int argc, char* argv[])
 
     ctx.ev_engine = event_new(eb, -1, 0, xqc_client_engine_callback, &ctx);
 
+    ctx.keylog_fd;
+
     ctx.engine = xqc_engine_create(XQC_ENGINE_CLIENT, &config, &engine_ssl_config, &callback, &tcbs, &ctx);
     if (ctx.engine == NULL) {
         printf("xqc_engine_create error\n");
@@ -1271,7 +1317,6 @@ int main(int argc, char* argv[])
         printf("sessoin data read error or use_1rtt\n");
         conn_ssl_config.session_ticket_data = NULL;
         conn_ssl_config.transport_parameter_data = NULL;
-
     }
     else {
         conn_ssl_config.session_ticket_data = session_ticket_data;
@@ -1280,19 +1325,9 @@ int main(int argc, char* argv[])
         conn_ssl_config.transport_parameter_data_len = tp_len;
     }
 
-
     const xqc_cid_t* cid;
-    if (user_conn->h3) {
-        if (g_test_case == 7) { user_conn->token_len = -1; } /* create connection fail */
-        cid = xqc_h3_connect(ctx.engine, &conn_settings, user_conn->token, user_conn->token_len,
-            g_host, g_no_crypt, &conn_ssl_config, user_conn->peer_addr,
-            user_conn->peer_addrlen, user_conn);
-    }
-    else {
-        cid = xqc_connect(ctx.engine, &conn_settings, user_conn->token, user_conn->token_len,
-            "127.0.0.1", g_no_crypt, &conn_ssl_config, user_conn->peer_addr,
-            user_conn->peer_addrlen, XQC_ALPN_TRANSPORT, user_conn);
-    }
+    cid = xqc_connect(ctx.engine, &conn_settings, user_conn->token, user_conn->token_len,"127.0.0.1", g_no_crypt, &conn_ssl_config, user_conn->peer_addr,
+        user_conn->peer_addrlen, XQC_ALPN_TRANSPORT, user_conn);
 
     if (cid == NULL) {
         printf("xqc_connect error\n");
@@ -1307,31 +1342,51 @@ int main(int argc, char* argv[])
         g_req_cnt++;
         user_stream_t* user_stream = (user_stream_t*)calloc(1, sizeof(user_stream_t));
         user_stream->user_conn = user_conn;
-        if (user_conn->h3) {
-            if (g_test_case == 11) { /* create stream fail */
-                xqc_cid_t tmp;
-                xqc_h3_request_create(ctx.engine, &tmp, user_stream);
-                continue;
-            }
 
-            user_stream->h3_request = xqc_h3_request_create(ctx.engine, cid, user_stream);
-            if (user_stream->h3_request == NULL) {
-                printf("xqc_h3_request_create error\n");
-                continue;
-            }
-            //xqc_client_request_send(user_stream->h3_request, user_stream);
+        user_stream->stream = xqc_stream_create(ctx.engine, cid, user_stream);
+
+        if (user_stream->stream == NULL) {
+            printf("xqc_stream_create error\n");
+            continue;
         }
-        else {
-            user_stream->stream = xqc_stream_create(ctx.engine, cid, user_stream);
-            if (user_stream->stream == NULL) {
-                printf("xqc_stream_create error\n");
-                continue;
-            }
+        xqc_client_stream_send(user_stream->stream, user_stream);
 
+        int ret = 0;
+        size_t total_len, read_len;
+        FILE* fp = fopen("test.txt", "rb");
+
+        fseek(fp, 0, SEEK_END);
+        total_len = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+        int pre_send_length = 800;
+        int index = 0;
+        
+        char buff[2048];
+
+        while (total_len > 0)
+        {
+            if (pre_send_length > total_len)
+            {
+                pre_send_length = total_len;
+            }
+            read_len = fread(buff, 1, pre_send_length, fp);
+            total_len -= pre_send_length;
+
+            user_stream->send_body = buff;
+            user_stream->send_body_len = pre_send_length;
+            //user_stream->send_offset = 0;
             xqc_client_stream_send(user_stream->stream, user_stream);
+
+            socklen_t peer_addrlen = 1;
+            const struct sockaddr* perr_addr = (struct sockaddr*)"127.0.0.1";
+            int fd = user_conn->fd;
+            int res = sendto(fd, buff, pre_send_length, 0, user_conn->peer_addr, user_conn->peer_addrlen);
+            std::cout << "res = " << res << std::endl;
         }
+        fclose(fp);
     }
 
+    
     last_recv_ts = xqc_now();
     event_base_dispatch(eb);
 
